@@ -745,6 +745,17 @@ lazy val akkaHttpServer: ProjectMatrix = (projectMatrix in file("server/akka-htt
   .jvmPlatform(scalaVersions = scala2Versions)
   .dependsOn(core, serverTests % Test)
 
+lazy val armeriaServer: ProjectMatrix = (projectMatrix in file("server/armeria-server"))
+  .settings(commonJvmSettings)
+  .settings(
+    name := "tapir-armeria-server",
+    libraryDependencies ++= Seq(
+      "com.linecorp.armeria" % "armeria" % Versions.armeria
+    )
+  )
+  .jvmPlatform(scalaVersions = scala2And3Versions)
+  .dependsOn(core, serverTests % Test)
+
 lazy val http4sServer: ProjectMatrix = (projectMatrix in file("server/http4s-server"))
   .settings(commonJvmSettings)
   .settings(

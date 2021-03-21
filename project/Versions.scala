@@ -32,4 +32,5 @@ object Versions {
   val derevo = "0.12.6"
   val newtype = "0.4.4"
   val awsLambdaInterface = "1.1.0"
+  val armeria = "1.11.0"
 }
