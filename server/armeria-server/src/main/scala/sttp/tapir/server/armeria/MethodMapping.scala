@@ -3,11 +3,10 @@ package sttp.tapir.server.armeria
 import com.linecorp.armeria.common.HttpMethod
 import sttp.model.Method
 
-/** Utility object to convert HTTP methods between Vert.x and Tapir
-  */
+/** Utility object to convert HTTP methods between Armeria and Tapir. */
 private[armeria] object MethodMapping {
 
-  private val sttpToArmeria = Map(
+  private val sttpToArmeria: Map[Method, HttpMethod] = Map(
     Method.CONNECT -> HttpMethod.CONNECT,
     Method.DELETE -> HttpMethod.DELETE,
     Method.GET -> HttpMethod.GET,
@@ -19,7 +18,7 @@ private[armeria] object MethodMapping {
     Method.TRACE -> HttpMethod.TRACE
   )
 
-  private val amreriaToSttp = Map(
+  private val armeriaToSttp: Map[HttpMethod, Method] = Map(
     HttpMethod.CONNECT -> Method.CONNECT,
     HttpMethod.DELETE -> Method.DELETE,
     HttpMethod.GET -> Method.GET,
@@ -31,7 +30,7 @@ private[armeria] object MethodMapping {
     HttpMethod.TRACE -> Method.TRACE
   )
 
-  def toArmeria(method: Option[Method]): Option[HttpMethod] = method.flatMap(sttpToArmeria.get)
+  def toArmeria(method: Method): HttpMethod = sttpToArmeria(method)
 
-  def toSttp(method: HttpMethod): Method = amreriaToSttp(method)
+  def fromArmeria(method: HttpMethod): Method = armeriaToSttp(method)
 }
