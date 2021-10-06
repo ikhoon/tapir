@@ -68,7 +68,7 @@ class ServerFileMultipartTests[F[_], ROUTE](
           .send(backend)
           .map { r =>
             r.code shouldBe StatusCode.Ok
-            if (multipartInlineHeaderSupport) r.body should include regex "X-Auth: Some\\(12Aa\\)"
+            if (multipartInlineHeaderSupport) r.body should include regex "(?i)(X-Auth):\\s*Some\\(12Aa\\)"
             r.body should include regex "name=\"data\"[\\s\\S]*oiram hcaep"
           }
       },
@@ -110,7 +110,7 @@ class ServerFileMultipartTests[F[_], ROUTE](
         .send(backend)
         .map { r =>
           r.code shouldBe StatusCode.Ok
-          r.body.toLowerCase() should include("content-type: text/html")
+          r.body.toLowerCase() should include regex "(?i)(content-type):\\s*text/html"
         }
     }
   )

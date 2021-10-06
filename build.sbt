@@ -745,12 +745,14 @@ lazy val akkaHttpServer: ProjectMatrix = (projectMatrix in file("server/akka-htt
   .jvmPlatform(scalaVersions = scala2Versions)
   .dependsOn(core, serverTests % Test)
 
+// TODO(ikhoon): Add Armeria client module
 lazy val armeriaServer: ProjectMatrix = (projectMatrix in file("server/armeria-server"))
   .settings(commonJvmSettings)
   .settings(
     name := "tapir-armeria-server",
     libraryDependencies ++= Seq(
       "com.linecorp.armeria" % "armeria" % Versions.armeria
+      // TODO(ikhoon): Support Cats-Effect and Zio
     )
   )
   .jvmPlatform(scalaVersions = scala2And3Versions)
@@ -1078,6 +1080,18 @@ lazy val playClient: ProjectMatrix = (projectMatrix in file("client/play-client"
     )
   )
   .jvmPlatform(scalaVersions = scala2Versions)
+  .dependsOn(core, clientTests % Test)
+
+lazy val armeriaClient: ProjectMatrix = (projectMatrix in file("client/armeria-client"))
+  .settings(clientTestServerSettings)
+  .settings(commonSettings)
+  .settings(
+    name := "tapir-armeria-client",
+    libraryDependencies ++= Seq(
+      "com.linecorp.armeria" % "armeria" % Versions.armeria
+    )
+  )
+  .jvmPlatform(scalaVersions = scala2And3Versions)
   .dependsOn(core, clientTests % Test)
 
 import scala.collection.JavaConverters._
