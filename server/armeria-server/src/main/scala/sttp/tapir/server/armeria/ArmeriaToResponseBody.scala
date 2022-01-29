@@ -5,13 +5,13 @@ import com.linecorp.armeria.common.stream.StreamMessage
 import com.linecorp.armeria.common.{ContentDisposition, HttpData, HttpHeaders}
 import com.linecorp.armeria.internal.shaded.guava.io.ByteStreams
 import io.netty.buffer.Unpooled
-import java.io.{File, InputStream}
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import org.reactivestreams.{Processor, Publisher}
 import sttp.model.{HasHeaders, HeaderNames, Part}
 import sttp.tapir.server.interpreter.ToResponseBody
-import sttp.tapir.{CodecFormat, RawBodyType, RawPart, WebSocketBodyOutput}
+import sttp.tapir.{CodecFormat, FileRange, RawBodyType, RawPart, WebSocketBodyOutput}
 
 private[armeria] final class ArmeriaToResponseBody extends ToResponseBody[ArmeriaResponseType, ArmeriaStreams] {
   override val streams: ArmeriaStreams = ArmeriaStreams
@@ -47,8 +47,8 @@ private[armeria] final class ArmeriaToResponseBody extends ToResponseBody[Armeri
         Right(HttpData.wrap(ByteStreams.toByteArray(is)))
 
       case RawBodyType.FileBody =>
-        val file = v.asInstanceOf[File]
-        Left(StreamMessage.of(file))
+        val file = v.asInstanceOf[FileRange]
+        Left(StreamMessage.of(file.file))
 
       case m: RawBodyType.MultipartBody =>
         val parts = (v: Seq[RawPart]).flatMap(rawPartToBodyPart(m, _))

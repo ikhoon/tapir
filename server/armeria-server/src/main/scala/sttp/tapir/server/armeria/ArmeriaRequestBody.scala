@@ -1,19 +1,16 @@
 package sttp.tapir.server.armeria
 
 import com.linecorp.armeria.common.multipart.{AggregatedBodyPart, Multipart}
-import com.linecorp.armeria.common.stream.StreamMessage
+import com.linecorp.armeria.common.stream.{StreamMessage, StreamMessages}
 import com.linecorp.armeria.common.{HttpData, HttpRequest}
 import com.linecorp.armeria.server.ServiceRequestContext
 import java.io.ByteArrayInputStream
-import java.nio.file.{Path, Paths}
-import java.util.Date
-import java.util.concurrent.ThreadLocalRandom
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters.CompletionStageOps
 import sttp.model.Part
-import sttp.tapir.RawBodyType
 import sttp.tapir.server.interpreter.{RawValue, RequestBody}
+import sttp.tapir.{FileRange, RawBodyType}
 
 final class ArmeriaRequestBody(
     ctx: ServiceRequestContext,
@@ -43,8 +40,9 @@ final class ArmeriaRequestBody(
       val bodyStream = request.filter(x => x.isInstanceOf[HttpData]).asInstanceOf[StreamMessage[HttpData]]
       for {
         file <- serverOptions.createFile(ctx)
-        _ <- new AsyncFileWriter(bodyStream, file.toPath, ctx.eventLoop()).whenComplete()
-      } yield RawValue(file, Seq(file))
+        _ <- StreamMessages.writeTo(bodyStream, file.toPath, ctx.eventLoop(), ctx.blockingTaskExecutor()).asScala
+        fileRange = FileRange(file)
+      } yield RawValue(fileRange, Seq(fileRange))
     case m: RawBodyType.MultipartBody =>
       Multipart
         .from(request)
@@ -73,8 +71,9 @@ final class ArmeriaRequestBody(
       case RawBodyType.FileBody =>
         for {
           file <- serverOptions.createFile(ctx)
-          _ <- new AsyncFileWriter(StreamMessage.of(body), file.toPath, ctx.eventLoop()).whenComplete()
-        } yield RawValue(file, Seq(file))
+          _ <- StreamMessages.writeTo(StreamMessage.of(body), file.toPath, ctx.eventLoop(), ctx.blockingTaskExecutor()).asScala
+          fileRange = FileRange(file)
+        } yield RawValue(fileRange, Seq(fileRange))
       case RawBodyType.MultipartBody(_, _) =>
         throw new UnsupportedOperationException("Nested multipart data is not supported.")
     }

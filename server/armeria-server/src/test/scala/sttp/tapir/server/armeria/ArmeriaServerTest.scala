@@ -14,8 +14,7 @@ class ArmeriaServerTest extends TestSuite {
     val createServerTest = new DefaultCreateServerTest(backend, interpreter)
 
     new ServerBasicTests(createServerTest, interpreter, supportsUrlEncodedPathSegments = false).tests() ++
-      new ServerFileMultipartTests(createServerTest).tests() ++
-      new ServerAuthenticationTests(createServerTest).tests() ++
-      new ServerMetricsTest(createServerTest).tests()
+      new AllServerTests(createServerTest, interpreter, backend, basic = false).tests() ++
+      new ServerStreamingTests(createServerTest, ArmeriaStreams).tests()
   }
 }

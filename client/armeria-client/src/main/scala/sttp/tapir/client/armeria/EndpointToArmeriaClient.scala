@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import sttp.tapir.Codec.PlainCodec
 import sttp.tapir.internal.Params
-import sttp.tapir.{Codec, CodecFormat, DecodeResult, Endpoint, EndpointIO, EndpointInput, Mapping, RawBodyType, StreamBodyIO}
+import sttp.tapir.{Codec, CodecFormat, DecodeResult, Endpoint, EndpointIO, EndpointInput, FileRange, Mapping, RawBodyType, StreamBodyIO}
 
 private[armeria] class EndpointToArmeriaClient(clientOptions: ArmeriaClientOptions) {
 
@@ -106,8 +106,8 @@ private[armeria] class EndpointToArmeriaClient(clientOptions: ArmeriaClientOptio
         val is = encoded.asInstanceOf[InputStream]
         Right(HttpData.wrap(ByteStreams.toByteArray(is)))
       case RawBodyType.FileBody =>
-        val file = encoded.asInstanceOf[File]
-        Left(StreamMessage.of(file))
+        val file = encoded.asInstanceOf[FileRange]
+        Left(StreamMessage.of(file.file))
       case _: RawBodyType.MultipartBody =>
         // TODO(ikhoon): Implement
         throw new IllegalArgumentException("Multipart body isn't supported yet")

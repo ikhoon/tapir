@@ -4,7 +4,7 @@ import com.linecorp.armeria.server.ServiceRequestContext
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
-import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog, ServerLogInterceptor}
+import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
 import sttp.tapir.server.interceptor.{CustomInterceptors, Interceptor}
 import sttp.tapir.{Defaults, TapirFile}
 
@@ -21,10 +21,9 @@ final case class ArmeriaServerOptions(
 object ArmeriaServerOptions {
 
   /** Allows customising the interceptors used by the server interpreter. */
-  def customInterceptors: CustomInterceptors[Future, Unit, ArmeriaServerOptions] =
+  def customInterceptors: CustomInterceptors[Future, ArmeriaServerOptions] =
     CustomInterceptors(
-      createLogInterceptor = (sl: ServerLog[Unit]) => new ServerLogInterceptor[Unit, Future](sl, (_, _) => Future.successful(())),
-      createOptions = (ci: CustomInterceptors[Future, Unit, ArmeriaServerOptions]) =>
+      createOptions = (ci: CustomInterceptors[Future, ArmeriaServerOptions]) =>
         ArmeriaServerOptions(
           defaultCreateFile,
           defaultDeleteFile,
@@ -39,20 +38,20 @@ object ArmeriaServerOptions {
   val defaultDeleteFile: (ServiceRequestContext, TapirFile) => Future[Unit] =
     (ctx, file) => blocking(ctx)(Defaults.deleteFile()(file))
 
-  val defaultServerLog: ServerLog[Unit] = DefaultServerLog(
+  val defaultServerLog: ServerLog[Future] = DefaultServerLog[Future](
     doLogWhenHandled = debugLog,
     doLogAllDecodeFailures = debugLog,
-    doLogExceptions = (msg: String, ex: Throwable) => logger.warn(msg, ex),
-    noLog = ()
+    doLogExceptions = (msg: String, ex: Throwable) => Future.successful(logger.warn(msg, ex)),
+    noLog = Future.unit
   )
 
   val default: ArmeriaServerOptions = customInterceptors.options
 
-  private def debugLog(msg: String, exOpt: Option[Throwable]): Unit =
-    exOpt match {
+  private def debugLog(msg: String, exOpt: Option[Throwable]): Future[Unit] =
+    Future.successful(exOpt match {
       case None     => logger.debug(msg)
       case Some(ex) => logger.debug(msg, ex)
-    }
+    })
 
   def blocking[T](ctx: ServiceRequestContext)(body: => T): Future[T] = {
     val promise = Promise[T]()

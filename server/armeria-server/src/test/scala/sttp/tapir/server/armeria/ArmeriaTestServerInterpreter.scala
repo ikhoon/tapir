@@ -2,12 +2,11 @@ package sttp.tapir.server.armeria
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
+import com.linecorp.armeria.common.{Http1HeaderNaming, HttpHeaderNames}
 import com.linecorp.armeria.common.logging.LogLevel
 import com.linecorp.armeria.server.logging.{AccessLogWriter, LoggingService}
 import com.linecorp.armeria.server.{HttpServiceWithRoutes, Server}
 import scala.concurrent.Future
-import scala.reflect.ClassTag
-import sttp.tapir.Endpoint
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.interceptor.decodefailure.{DecodeFailureHandler, DefaultDecodeFailureHandler}
 import sttp.tapir.server.interceptor.metrics.MetricsRequestInterceptor
@@ -15,8 +14,9 @@ import sttp.tapir.server.tests.TestServerInterpreter
 import sttp.tapir.tests.Port
 
 class ArmeriaTestServerInterpreter() extends TestServerInterpreter[Future, ArmeriaStreams, HttpServiceWithRoutes] {
-  override def route[I, E, O](
-      e: ServerEndpoint[I, E, O, ArmeriaStreams, Future],
+
+  override def route(
+      e: ServerEndpoint[ArmeriaStreams, Future],
       decodeFailureHandler: Option[DecodeFailureHandler] = None,
       metricsInterceptor: Option[MetricsRequestInterceptor[Future]] = None
   ): HttpServiceWithRoutes = {
@@ -24,20 +24,14 @@ class ArmeriaTestServerInterpreter() extends TestServerInterpreter[Future, Armer
       .metricsInterceptor(metricsInterceptor)
       .decodeFailureHandler(
         decodeFailureHandler
-          .getOrElse(DefaultDecodeFailureHandler.handler)
+          .getOrElse(DefaultDecodeFailureHandler.default)
       )
       .options
-    ArmeriaServerInterpreter(serverOptions).toRoutes(e)
+    ArmeriaServerInterpreter(serverOptions).toRoute(e)
   }
 
-  override def route[I, E, O](es: List[ServerEndpoint[I, E, O, ArmeriaStreams, Future]]): HttpServiceWithRoutes =
-    ArmeriaServerInterpreter().toRoutes(es)
-
-  override def routeRecoverErrors[I, E <: Throwable, O](e: Endpoint[I, E, O, ArmeriaStreams], fn: I => Future[O])(implicit
-      eClassTag: ClassTag[E]
-  ): HttpServiceWithRoutes = {
-    ArmeriaServerInterpreter().toRoutesRecoverErrors(e)(fn)
-  }
+  override def route(es: List[ServerEndpoint[ArmeriaStreams, Future]]): HttpServiceWithRoutes =
+    ArmeriaServerInterpreter().toRoute(es)
 
   override def server(routes: NonEmptyList[HttpServiceWithRoutes]): Resource[IO, Port] = {
     val bind = IO.fromCompletableFuture(
