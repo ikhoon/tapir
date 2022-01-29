@@ -2,7 +2,6 @@ package sttp.tapir.server.armeria
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import com.linecorp.armeria.common.{Http1HeaderNaming, HttpHeaderNames}
 import com.linecorp.armeria.common.logging.LogLevel
 import com.linecorp.armeria.server.logging.{AccessLogWriter, LoggingService}
 import com.linecorp.armeria.server.{HttpServiceWithRoutes, Server}
