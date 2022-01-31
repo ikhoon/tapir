@@ -1,6 +1,6 @@
 package sttp.tapir.server.armeria
 
-import com.linecorp.armeria.common.{HttpRequest, QueryParams => ArmeriaQueryParams}
+import com.linecorp.armeria.common.HttpRequest
 import com.linecorp.armeria.server.ServiceRequestContext
 import java.net.InetSocketAddress
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -37,12 +37,17 @@ private[armeria] final class ArmeriaServerRequest(ctx: ServiceRequestContext) ex
     if (ctx.path() == "/") {
       Nil
     } else {
-      ctx.path().substring(1).split("/").toList
+      // Armeria does not decode '%2F' in a path into '/' by default.
+      decodeSlash(ctx.path()).substring(1).split("/").toList
     }
   }
 
+  private def decodeSlash(path: String): String = {
+    path.replaceAll("%2[fF]", "/")
+  }
+
   override val queryParameters: QueryParams = {
-    val params = ArmeriaQueryParams.fromQueryString(ctx.query())
+    val params = ctx.queryParams()
 
     val builder = Seq.newBuilder[(String, Seq[String])]
     builder.sizeHint(params.size())

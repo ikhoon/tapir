@@ -1,10 +1,10 @@
 package sttp.tapir.server.armeria
 
-import com.linecorp.armeria.common.{HttpHeaders, ResponseHeaders, MediaType => ArmeriaMediaType}
+import com.linecorp.armeria.common.{HttpHeaderNames, HttpHeaders, RequestHeaders, ResponseHeaders, MediaType => ArmeriaMediaType}
 import scala.collection.JavaConverters._
 import sttp.model.{Header, MediaType, StatusCode}
 
-object HeaderMapping {
+private[armeria] object HeaderMapping {
   def fromArmeria(headers: HttpHeaders): Seq[Header] = {
     val builder = Seq.newBuilder[Header]
     builder.sizeHint(headers.size())

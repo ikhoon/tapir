@@ -783,8 +783,10 @@ lazy val armeriaServer: ProjectMatrix = (projectMatrix in file("server/armeria-s
   .settings(
     name := "tapir-armeria-server",
     libraryDependencies ++= Seq(
-      "com.linecorp.armeria" % "armeria" % Versions.armeria
-      // TODO(ikhoon): Support Cats-Effect and Zio
+      "com.linecorp.armeria" % "armeria" % Versions.armeria,
+      "com.softwaremill.sttp.shared" %% "fs2" % Versions.sttpShared % Optional,
+      "com.softwaremill.sttp.shared" %% "zio1" % Versions.sttpShared % Optional,
+      "dev.zio" %% "zio-interop-cats" % Versions.zioInteropCats % Test
     )
   )
   .jvmPlatform(scalaVersions = scala2And3Versions)

@@ -13,8 +13,9 @@ class ArmeriaServerTest extends TestSuite {
     val interpreter = new ArmeriaTestServerInterpreter()
     val createServerTest = new DefaultCreateServerTest(backend, interpreter)
 
-    new ServerBasicTests(createServerTest, interpreter, supportsUrlEncodedPathSegments = false).tests() ++
-      new AllServerTests(createServerTest, interpreter, backend, basic = false).tests() ++
+    new AllServerTests(createServerTest, interpreter, backend, basic = false, reject = false).tests() ++
+      new ServerBasicTests(createServerTest, interpreter, supportsUrlEncodedPathSegments = false).tests() ++
+      new ServerRejectTests(createServerTest, interpreter, useMethodNotAllowedForUnsupportedMethod = true).tests() ++
       new ServerStreamingTests(createServerTest, ArmeriaStreams).tests()
   }
 }

@@ -47,8 +47,15 @@ private[armeria] final class ArmeriaToResponseBody extends ToResponseBody[Armeri
         Right(HttpData.wrap(ByteStreams.toByteArray(is)))
 
       case RawBodyType.FileBody =>
-        val file = v.asInstanceOf[FileRange]
-        Left(StreamMessage.of(file.file))
+        val tapirFile = v.asInstanceOf[FileRange]
+        val streamMessage = tapirFile.range
+          .flatMap(r =>
+            r.startAndEnd.map { case (start, end) =>
+              PathStreamMessage(tapirFile.file.toPath, start, end)
+            }
+          )
+          .getOrElse(StreamMessage.of(tapirFile.file))
+        Left(streamMessage)
 
       case m: RawBodyType.MultipartBody =>
         val parts = (v: Seq[RawPart]).flatMap(rawPartToBodyPart(m, _))
