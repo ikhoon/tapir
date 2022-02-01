@@ -33,4 +33,5 @@ object Versions {
   val newtype = "0.4.4"
   val awsLambdaInterface = "2.1.0"
   val armeria = "1.14.0"
+  val fs2 = "3.2.4"
 }

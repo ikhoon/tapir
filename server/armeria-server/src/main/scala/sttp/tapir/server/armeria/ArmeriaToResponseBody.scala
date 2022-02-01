@@ -8,24 +8,30 @@ import io.netty.buffer.Unpooled
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
-import org.reactivestreams.{Processor, Publisher}
+import sttp.capabilities.Streams
 import sttp.model.{HasHeaders, HeaderNames, Part}
 import sttp.tapir.server.interpreter.ToResponseBody
 import sttp.tapir.{CodecFormat, FileRange, RawBodyType, RawPart, WebSocketBodyOutput}
 
-private[armeria] final class ArmeriaToResponseBody extends ToResponseBody[ArmeriaResponseType, ArmeriaStreams] {
-  override val streams: ArmeriaStreams = ArmeriaStreams
+private[armeria] final class ArmeriaToResponseBody[S <: Streams[S]](streamCompatible: StreamCompatible[S])
+    extends ToResponseBody[ArmeriaResponseType, S] {
+  override val streams: S = streamCompatible.streams
 
   override def fromRawValue[R](v: R, headers: HasHeaders, format: CodecFormat, bodyType: RawBodyType[R]): ArmeriaResponseType =
     rawValueToHttpData(bodyType, v)
 
   override def fromStreamValue(
-      v: Publisher[HttpData],
+      v: streams.BinaryStream,
       headers: HasHeaders,
       format: CodecFormat,
       charset: Option[Charset]
   ): ArmeriaResponseType =
-    Left(StreamMessage.of(v))
+    Left(StreamMessage.of(streamCompatible.asStreamMessage(v.asInstanceOf[streamCompatible.streams.BinaryStream])))
+
+  override def fromWebSocketPipe[REQ, RESP](
+      pipe: streams.Pipe[REQ, RESP],
+      o: WebSocketBodyOutput[streams.Pipe[REQ, RESP], REQ, RESP, _, S]
+  ): ArmeriaResponseType = throw new UnsupportedOperationException()
 
   private def rawValueToHttpData[R](bodyType: RawBodyType[R], v: R): ArmeriaResponseType = {
     bodyType match {
@@ -92,10 +98,4 @@ private[armeria] final class ArmeriaToResponseBody extends ToResponseBody[Armeri
       bodyPartBuilder.build();
     }
   }
-
-  override def fromWebSocketPipe[REQ, RESP](
-      pipe: Processor[REQ, RESP],
-      o: WebSocketBodyOutput[Processor[REQ, RESP], REQ, RESP, _, ArmeriaStreams]
-  ): ArmeriaResponseType =
-    throw new UnsupportedOperationException()
 }

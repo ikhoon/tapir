@@ -4,34 +4,19 @@ import com.linecorp.armeria.server.ServiceRequestContext
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
-import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
-import sttp.tapir.server.interceptor.{CustomInterceptors, Interceptor}
 import sttp.tapir.{Defaults, TapirFile}
+import sttp.tapir.server.interceptor.Interceptor
+import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
 
-final case class ArmeriaServerOptions(
-    createFile: ServiceRequestContext => Future[TapirFile],
-    deleteFile: (ServiceRequestContext, TapirFile) => Future[Unit],
-    interceptors: List[Interceptor[Future]]
-) {
-  def prependInterceptor(i: Interceptor[Future]): ArmeriaServerOptions = copy(interceptors = i :: interceptors)
-
-  def appendInterceptor(i: Interceptor[Future]): ArmeriaServerOptions = copy(interceptors = interceptors :+ i)
+trait ArmeriaServerOptions[F[_]] {
+  def createFile: ServiceRequestContext => Future[TapirFile]
+  def deleteFile: (ServiceRequestContext, TapirFile) => Future[Unit]
+  def interceptors: List[Interceptor[F]]
 }
 
 object ArmeriaServerOptions {
 
-  /** Allows customising the interceptors used by the server interpreter. */
-  def customInterceptors: CustomInterceptors[Future, ArmeriaServerOptions] =
-    CustomInterceptors(
-      createOptions = (ci: CustomInterceptors[Future, ArmeriaServerOptions]) =>
-        ArmeriaServerOptions(
-          defaultCreateFile,
-          defaultDeleteFile,
-          ci.interceptors
-        )
-    ).serverLog(defaultServerLog)
-
-  val logger: Logger = LoggerFactory.getLogger(this.getClass.getPackage.getName)
+  private val logger: Logger = LoggerFactory.getLogger(this.getClass.getPackage.getName)
 
   val defaultCreateFile: (ServiceRequestContext) => Future[TapirFile] = ctx => blocking(ctx)(Defaults.createTempFile())
 
@@ -45,15 +30,13 @@ object ArmeriaServerOptions {
     noLog = Future.unit
   )
 
-  val default: ArmeriaServerOptions = customInterceptors.options
-
   private def debugLog(msg: String, exOpt: Option[Throwable]): Future[Unit] =
     Future.successful(exOpt match {
       case None     => logger.debug(msg)
       case Some(ex) => logger.debug(msg, ex)
     })
 
-  def blocking[T](ctx: ServiceRequestContext)(body: => T): Future[T] = {
+  private def blocking[T](ctx: ServiceRequestContext)(body: => T): Future[T] = {
     val promise = Promise[T]()
     ctx
       .blockingTaskExecutor()

@@ -8,23 +8,30 @@ import java.io.ByteArrayInputStream
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters.CompletionStageOps
+import sttp.capabilities.Streams
 import sttp.model.Part
 import sttp.tapir.server.interpreter.{RawValue, RequestBody}
 import sttp.tapir.{FileRange, RawBodyType}
 
-final class ArmeriaRequestBody(
+final class ArmeriaRequestBody[F[_], S <: Streams[S]](
     ctx: ServiceRequestContext,
-    request: HttpRequest,
-    serverOptions: ArmeriaServerOptions
+    serverOptions: ArmeriaServerOptions[F],
+    fromFuture: FromFuture[F],
+    streamCompatible: StreamCompatible[S]
 )(implicit ec: ExecutionContext)
-    extends RequestBody[Future, ArmeriaStreams] {
+    extends RequestBody[F, S] {
 
-  override val streams: ArmeriaStreams = ArmeriaStreams
+  private val request: HttpRequest = ctx.request()
 
-  override def toStream(): streams.BinaryStream =
-    request.filter(x => x.isInstanceOf[HttpData]).asInstanceOf[StreamMessage[HttpData]]
+  override val streams: Streams[S] = streamCompatible.streams
 
-  override def toRaw[R](bodyType: RawBodyType[R]): Future[RawValue[R]] = bodyType match {
+  override def toStream(): streams.BinaryStream = {
+    streamCompatible
+      .fromArmeriaStream(request.filter(x => x.isInstanceOf[HttpData]).asInstanceOf[StreamMessage[HttpData]])
+      .asInstanceOf[streams.BinaryStream]
+  }
+
+  override def toRaw[R](bodyType: RawBodyType[R]): F[RawValue[R]] = fromFuture(bodyType match {
     case RawBodyType.StringBody(_) =>
       request.aggregate().thenApply[RawValue[R]](agg => RawValue(agg.contentUtf8())).asScala
     case RawBodyType.ByteArrayBody =>
@@ -60,7 +67,7 @@ final class ArmeriaRequestBody(
             .map(RawValue.fromParts(_))
         })
         .asInstanceOf[Future[RawValue[R]]]
-  }
+  })
 
   private def toRawFromHttpData[R](body: HttpData, bodyType: RawBodyType[R]): Future[RawValue[R]] = {
     bodyType match {
