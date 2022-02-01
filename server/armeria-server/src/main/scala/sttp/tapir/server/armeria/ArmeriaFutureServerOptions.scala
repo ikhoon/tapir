@@ -1,12 +1,9 @@
 package sttp.tapir.server.armeria
 
 import com.linecorp.armeria.server.ServiceRequestContext
-import org.slf4j.{Logger, LoggerFactory}
-import scala.concurrent.{Future, Promise}
-import scala.util.control.NonFatal
-import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
+import scala.concurrent.Future
+import sttp.tapir.TapirFile
 import sttp.tapir.server.interceptor.{CustomInterceptors, Interceptor}
-import sttp.tapir.{Defaults, TapirFile}
 
 final case class ArmeriaFutureServerOptions(
     createFile: ServiceRequestContext => Future[TapirFile],

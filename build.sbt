@@ -807,12 +807,11 @@ lazy val armeriaServerZio: ProjectMatrix =
     .settings(
       name := "tapir-armeria-server-zio",
       libraryDependencies ++= Seq(
-        "com.softwaremill.sttp.shared" %% "zio1" % Versions.sttpShared,
-        "dev.zio" %% "zio-interop-cats" % Versions.zioInteropCats % Test
+        "dev.zio" %% "zio-interop-reactivestreams" % Versions.zioInteropReactiveStreams
       )
     )
     .jvmPlatform(scalaVersions = scala2And3Versions)
-    .dependsOn(armeriaServer % "compile->compile;test->test", cats, serverTests % Test)
+    .dependsOn(armeriaServer % "compile->compile;test->test", zio, serverTests % Test)
 
 lazy val http4sServer: ProjectMatrix = (projectMatrix in file("server/http4s-server"))
   .settings(commonJvmSettings)

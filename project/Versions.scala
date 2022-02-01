@@ -22,6 +22,7 @@ object Versions {
   val enumeratum = "1.7.0"
   val zio = "1.0.13"
   val zioInteropCats = "3.2.9.0"
+  val zioInteropReactiveStreams = "1.3.9"
   val zioJson = "0.2.0-M3"
   val playClient = "2.1.7"
   val playServer = "2.8.13"

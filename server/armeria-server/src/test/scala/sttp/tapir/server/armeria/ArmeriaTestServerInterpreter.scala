@@ -23,11 +23,11 @@ class ArmeriaTestServerInterpreter() extends TestServerInterpreter[Future, Armer
       .metricsInterceptor(metricsInterceptor)
       .decodeFailureHandler(decodeFailureHandler.getOrElse(DefaultDecodeFailureHandler.default))
       .options
-    ArmeriaServerInterpreter(serverOptions).toRoute(e)
+    ArmeriaFutureServerInterpreter(serverOptions).toRoute(e)
   }
 
   override def route(es: List[ServerEndpoint[ArmeriaStreams, Future]]): HttpServiceWithRoutes =
-    ArmeriaServerInterpreter().toRoute(es)
+    ArmeriaFutureServerInterpreter().toRoute(es)
 
   override def server(routes: NonEmptyList[HttpServiceWithRoutes]): Resource[IO, Port] = {
     val bind = IO.fromCompletableFuture(
