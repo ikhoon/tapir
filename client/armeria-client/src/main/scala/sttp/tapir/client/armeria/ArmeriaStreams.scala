@@ -1,4 +1,4 @@
-package sttp.tapir.server.armeria
+package sttp.tapir.client.armeria
 
 import com.linecorp.armeria.common.HttpData
 import org.reactivestreams.{Processor, Publisher}

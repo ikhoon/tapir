@@ -1164,7 +1164,8 @@ lazy val armeriaClient: ProjectMatrix = (projectMatrix in file("client/armeria-c
   .settings(
     name := "tapir-armeria-client",
     libraryDependencies ++= Seq(
-      "com.linecorp.armeria" % "armeria" % Versions.armeria
+      "com.linecorp.armeria" % "armeria" % Versions.armeria,
+      "org.scala-lang.modules" %% "scala-java8-compat" % Versions.java8Compat
     )
   )
   .jvmPlatform(scalaVersions = scala2And3Versions)

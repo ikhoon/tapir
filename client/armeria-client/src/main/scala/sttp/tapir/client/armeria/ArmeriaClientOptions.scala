@@ -1,3 +1,9 @@
 package sttp.tapir.client.armeria
 
-class ArmeriaClientOptions {}
+import sttp.tapir.{Defaults, TapirFile}
+
+case class ArmeriaClientOptions(createFile: () => TapirFile)
+
+object ArmeriaClientOptions {
+  val default: ArmeriaClientOptions = ArmeriaClientOptions(Defaults.createTempFile)
+}
